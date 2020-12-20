@@ -1,9 +1,15 @@
 const express =require('express');
 const dotenv= require('dotenv');
+const helmet= require('helmet');
+const hpp= require('hpp');
+const rateLimit= require('express-rate-limit');
+const xss= require('xss-clean');
+const cors= require('cors');
 const morgan= require('morgan');
 const errorHandler= require('./middleware/error');
 const connectDB=require('./config/db');
 const cookieParser=require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
 
 //Load env vars
 dotenv.config({path:'./config/config.env'});
@@ -22,6 +28,25 @@ app.use(express.json());
 
 //Cookie parser
 app.use(cookieParser());
+
+//Mongo- sanitaze data
+app.use(mongoSanitize());
+
+//Securyti headers
+app.use(helmet());
+
+//Prevent XSS attack
+app.use(xss());
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 mins
+    max: 100
+  });
+  app.use(limiter);
+  
+  // Prevent http param pollution
+  app.use(hpp());
 
 //Dev logging middlware
 if(process.env.NODE_ENV==='development')
